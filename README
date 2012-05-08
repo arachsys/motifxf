@@ -1,0 +1,54 @@
+Motif XF network audio
+======================
+
+Playback
+--------
+
+To play audio through the Motif, connect to it on TCP port 5556 and send a
+continuous stream of audio chunks, each consisting of the eight bytes
+
+  ‘W’, ‘A’, ‘V’, ‘E’, 0xLL, 0xHH, 0x00, 0x00
+
+followed by 0xHHLL bytes of stereo, 16-bit, signed, little-endian audio
+data. 0x8000 works well as a chunk size, and matches that used by the
+instrument when recording.
+
+The Motif has a playback buffer of size 0x180000 bytes, and will only start
+playback once this buffer is full. If we close() the socket (or shutdown()
+the sending side), it immediately dumps this buffer and stops playback.
+
+Sample code is in motifplay.c. On normal exit, it pads the end of the
+playback data with 0x180000 zero bytes and closes the socket immediately
+afterwards. The result of this is that we play right up to the end of the
+unpadded audio data and then stop cleanly: the instrument dumps only the
+silent padding.
+
+On SIGINT, however, the socket is closed without padding, so playback stops
+promptly and buffered audio data is discarded.
+
+
+Recording
+---------
+
+To record audio from the Motif, connect to it on TCP port 5555 and you will
+receive a continuous stream of audio chunks, each consisting of the eight
+bytes
+
+  ‘W’, ‘A’, ‘V’, ‘E’, 0xLL, 0xHH, 0x00, 0x00
+
+followed by 0xHHLL bytes of stereo, 16-bit, signed, little-endian audio
+data. The instrument always uses a chunk size of 0x8000 when recording,
+even though it seems to support other chunk sizes on playback.
+
+Close the connection when you want to stop recording audio data. (This is
+all the official Yamaha iPad app does.)
+
+Sample code is in motifrecord.c. It continues recording until interrupted
+with SIGINT. It then finishes recording and exits cleanly.
+
+
+Contact
+-------
+
+These notes and examples were written by Chris Webb <chris@arachsys.com> and
+are distributed as Free Software under the terms of the MIT license.
