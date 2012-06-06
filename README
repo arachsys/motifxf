@@ -4,6 +4,8 @@ Resources for Yamaha Motif XF
 audio/ contains notes and demonstrations on playing and recording Motif XF
 network audio.
 
+ysfc/ contains notes on the Yamaha YSFC format with some example scripts.
+
 
 Contact
 -------

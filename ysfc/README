@@ -1,0 +1,179 @@
+Brief notes on the Yamaha-YSFC file format (version 1.0.2)
+==========================================================
+
+All Motif XF native files (X3A, X3G, X3V, etc) have an identical structure. The
+extension just identifies which data types are contained within that structure
+for the purposes of user interface.
+
+32-bit and 16-bit quantities mentioned below are unsigned and stored in
+big-endian byte ordering unless otherwise described.
+
+
+Header
+------
+
+The file header looks like:
+
+00000000  59 41 4d 41 48 41 2d 59  53 46 43 00 00 00 00 00  |YAMAHA-YSFC.....|
+00000010  31 2e 30 2e 32 00 00 00  00 00 00 00 00 00 00 00  |1.0.2...........|
+00000020  nn nn nn nn ff ff ff ff  ff ff ff ff ff ff ff ff  |................|
+00000030  ff ff ff ff ff ff ff ff  ff ff ff ff ff ff ff ff  |................|
+
+Earlier versions of the Motif seem to produce versions 1.0.1 and 1.0.0 with
+an identical header, and one slight format difference. (See below under 'Entry
+lists'.)
+
+nn nn nn nn is the (big-endian) size in bytes of the catalogue which follows.
+
+
+Catalogue
+---------
+
+Top-level blocks of data within these files are identified by four letter chunk
+IDs, for instance EVCE or DPFM. The catalogue consists of 8 byte entries: each
+being the four byte identifier followed by the byte offset of that block within
+the file.
+
+Here is an example catalogue from the Yamaha InspirationInAFlash.X3A file:
+
+00000040  45 4d 4c 54 00 00 01 30  45 4d 53 54 00 00 08 83  |EMLT...0EMST....|
+00000050  45 50 46 4d 00 00 29 89  45 56 43 45 00 00 bc e1  |EPFM..).EVCE....|
+00000060  45 57 46 4d 00 01 94 b4  45 41 52 50 00 01 ed 66  |EWFM....EARP...f|
+00000070  45 50 54 4e 00 02 11 a9  45 53 4e 47 00 02 12 61  |EPTN....ESNG...a|
+00000080  45 53 59 53 00 02 14 2c  45 46 56 54 00 02 14 68  |ESYS...,EFVT...h|
+00000090  45 53 43 48 00 02 15 10  45 50 43 48 00 02 15 52  |ESCH....EPCH...R|
+000000a0  45 50 4d 54 00 02 16 0a  45 53 4d 54 00 02 16 c2  |EPMT....ESMT....|
+000000b0  45 57 49 4d 00 02 18 8d  44 4d 4c 54 00 02 71 3f  |EWIM....DMLT..q?|
+000000c0  44 4d 53 54 00 03 aa cb  44 50 46 4d 00 04 c2 d7  |DMST....DPFM....|
+000000d0  44 56 43 45 00 0b fa e3  44 57 46 4d 00 1f 2b 7f  |DVCE....DWFM..+.|
+000000e0  44 41 52 50 00 23 58 47  44 50 54 4e 00 24 70 62  |DARP.#XGDPTN.$pb|
+000000f0  44 53 4e 47 00 25 cc c2  44 53 59 53 00 29 70 ec  |DSNG.%..DSYS.)p.|
+00000100  44 46 56 54 00 29 75 38  44 53 43 48 00 29 a8 70  |DFVT.)u8DSCH.).p|
+00000110  44 50 43 48 00 29 a8 e8  44 50 4d 54 00 29 ab d3  |DPCH.)..DPMT.)..|
+00000120  44 53 4d 54 00 29 c9 43  44 57 49 4d 00 2a 17 af  |DSMT.).CDWIM.*..|
+
+
+Blocks
+------
+
+Directly after the catalogue, the data blocks follow one by one until the end
+of the file. Each data block has the following overall format:
+
+  4 bytes identifier, e.g. "EMLT"
+  4 bytes (unsigned big-endian) length of payload (n)
+  n bytes payload
+
+There are two types of blocks, which are always included in matching pairs of
+each type. A list of entries has a type beginning with 'E', e.g. "EVCE", and
+its corresponding data has a type beginning with 'D', e.g. "DVCE". The 'E'
+block should always preceed the 'D' block in the file. Otherwise, block order
+doesn't seem to matter.
+
+
+Entry lists
+-----------
+
+An entry list block is effectively an index pointing into the corresponding
+data block. After the initial Exxx identifier and block length, they begin with
+a four byte count of entries, followed by the entries one by one:
+
+  4 bytes magic "Entr"
+  4 bytes length of this entry, excluding these first 8 bytes
+  4 bytes unknown (apparently always zero)
+  4 bytes size of associated data in the corresponding Dxxx block (see below)
+  4 bytes unknown (apparently always zero in Motif output; usually zero in
+    third-party files but not always)
+  4 bytes offset of associated data in the corresponding Dxxx block
+  4 bytes program number (e.g. voice program, arpeggio number, song number)
+  2 bytes unknown (only 1 byte in versions 1.0.1 and below)
+  NUL terminated entry name, e.g. "0:256:Natural Grand S6\x00"
+  NUL terminated filename, e.g. "000-Voice.vce\x00"
+
+For voice entries, there then follow the NUL terminated filenames associated
+with any user waveforms which the voice depends upon. This is presumably a
+special case for voices and waveforms: there does not appear to be equivalent
+dependency information for arpeggios which voices depend upon, nor voices
+which performances, songs and patterns depend upon and so on.
+
+All the bytes described as unknown can apparently be set to zero safely
+without causing any problems, so we ignore these on both input and output.
+
+
+Data blocks
+-----------
+
+Following the initial Dxxx identifier and block length, the data blocks also
+have a four byte count of entries, followed by a sequence of Data chunks
+corresponding to the Entr chunks in the Exxx block.
+
+Each Data chunk has 4 bytes magic "Data", followed by 4 bytes length
+(excluding these first 8 bytes, as with Entr chunks) and then the data itself.
+
+The offset stored in the Entr chunk points eight bytes into the Data chunk,
+i.e. to the beginning of the data itself. The size at the start of the Data
+chunk should match that stored in the Entr chunk and is the size of the raw
+data excluding the initial eight bytes of magic-plus-length.
+
+
+Block types
+-----------
+
+[NNN below are zero-padded and numbered from zero, i.e. 000, 001, ...]
+
+ESYS, DSYS  -  system configuration
+  (exactly one Entr, number 0, name System, filename system.sys)
+ESCH, DSCH  -  song chain
+  (exactly one Entr, number 0, name SongChain, filename songchain.sch)
+EARP, DARP  -  user arpeggios (filenames NNN-Arpeggio.arp)
+EMLT, DMLT  -  mix templates (filenames NNN-Template.mlt)
+EMST, DMST  -  master mode programs (filenames NNN-Master.mst)
+EPFM, DPFM  -  performances (filenames NNN-Performance.pfm)
+EWFM, DWFM  -  waveforms (filenames NNNN-Waveform.wfm, small => metadata?)
+EWIM, DWIM  -  waveforms (filenames NNNN-Waveform.wim, big => wave data?)
+ESNG, DSNG  -  songs (filenames NNN-Song.sng)
+ESMT, DSMT  -  song mixings (filenames NNN-Song.smt)
+EPTN, DPTN  -  patterns (filenames NNN-Pattern.ptn)
+EPMT, DPMT  -  pattern mixings (filenames NNN-Pattern.pmt)
+EPCH, DPCH  -  pattern chains (filenames NNN-Pattern.pch)
+
+EFVT, DFVT  -  favorites:
+  0x00 "Favorite" favourite.fvt
+  0x01 "Favorite" arpeggio.fvt
+  0x02 "Favorite" waveform.fvt
+
+EVCE, DVCE  -  voices (filenames XXXXXX-Voice.vce, e.g. 3F0800-Voice.vce)
+  0x000000 - 0x00007f  -  GM
+  0x3f0000 - 0x3f007f  -  PRE1
+  0x3f0100 - 0x3f017f  -  PRE2
+  0x3f0200 - 0x3f027f  -  PRE3
+  0x3f0300 - 0x3f037f  -  PRE4
+  0x3f0400 - 0x3f047f  -  PRE5
+  0x3f0500 - 0x3f057f  -  PRE6
+  0x3f0600 - 0x3f067f  -  PRE7
+  0x3f0700 - 0x3f077f  -  PRE8
+  0x3f0800 - 0x3f087f  -  USR1
+  0x3f0900 - 0x3f097f  -  USR2
+  0x3f0a00 - 0x3f0a7f  -  USR3
+  0x3f0b00 - 0x3f0b7f  -  USR4
+  0x3f2000 - 0x3f207f  -  PREDR
+  0x3f2800 - 0x3f287f  -  USRDR
+  0x3f8000 - 0x3fbfff  -  song sample (00-7f) and mixing (80-ff) voices
+  0x3fc000 - 0x3fffff  -  pattern sample (00-7f) and mixing (80-ff) voices
+  0x7f0000 - 0x7f0000  -  GMDR
+
+GM, PRE1-8, PREDR and GMDR are preset and are not included in [ED]VCE data.
+
+
+Categories
+----------
+
+Category information is included at the beginning of the names of waveforms,
+voices, arpeggios and performances. For instance, Natural Grand S6 is actually
+named "0:256:Natural Grand S6" and Piano Electro is "36:Piano Electro".
+
+Waveforms, arpeggios and peformances have just one associated category, and
+thus are named with a single non-negative integer prefix of the form "%d:".
+
+However, voices can belong to a secondary category so have have two decimal
+integers "%d:%d:" as a prefix. The secondary category for a voice is set to
+256 if it isn't required.
