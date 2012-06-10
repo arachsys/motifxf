@@ -177,3 +177,28 @@ thus are named with a single non-negative integer prefix of the form "%d:".
 However, voices can belong to a secondary category so have have two decimal
 integers "%d:%d:" as a prefix. The secondary category for a voice is set to
 256 if it isn't required.
+
+
+Extracting arp information
+--------------------------
+
+Arp numbers are stored in the data block of each voice (DVCE), performance
+(DPFM) and multi (pattern/song/mixing template: DPMT/DSMT/DMLT). They are
+stored as little-endian 16-bit integers. 0x0000 is arp-off, 0x0001 is preset
+arp 1, 0x0002 is preset arp 2, 0x1ec9 (i.e. bytes "\xc9\x1e") is preset arp
+7881, 0x2000 is user arp 1, 0x2001 is user arp 2, etc.
+
+Measuring offsets with zero pointing to the first real data block (i.e.
+ignoring the Data magic and size word), in normal voice DVCE blocks, arp
+number n = 0, ..., 4 is stored in the two bytes at offset 0x658 + 2n. However,
+in drum voice DVCE blocks, arp n = 0, ..., 4 is stored at offset 0x2be8 + 2n.
+
+In DPFM blocks, arp n = 0, ..., 4 of part p = 0, ..., 3 is stored at offset
+0x2b8 + (0x38)p + 2n.
+
+In DMLT, DPMT and DSMT blocks, arp n = 0, ..., 4 of part p = 0, ..., 15 is
+stored at offset 0x648 + (0x38)p + 2n.
+
+These locations can be read to include user arp dependencies with voices,
+performances and mixings automatically, but also updated when renumbering user
+arps without gaps in the resulting output file.
