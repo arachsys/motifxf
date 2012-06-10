@@ -189,7 +189,7 @@ arp 1, 0x0002 is preset arp 2, 0x1ec9 (i.e. bytes "\xc9\x1e") is preset arp
 7881, 0x2000 is user arp 1, 0x2001 is user arp 2, etc.
 
 Measuring offsets with zero pointing to the first real data block (i.e.
-ignoring the Data magic and size word), in normal voice DVCE blocks, arp
+ignoring the "Data" magic and size word), in normal voice DVCE blocks, arp
 number n = 0, ..., 4 is stored in the two bytes at offset 0x658 + 2n. However,
 in drum voice DVCE blocks, arp n = 0, ..., 4 is stored at offset 0x2be8 + 2n.
 
@@ -202,3 +202,42 @@ stored at offset 0x648 + (0x38)p + 2n.
 These locations can be read to include user arp dependencies with voices,
 performances and mixings automatically, but also updated when renumbering user
 arps without gaps in the resulting output file.
+
+
+Extracting voice information
+----------------------------
+
+Voice numbers are stored in the data block of each performance (DPFM) and
+multi (DPMT/DSMT/DMLT). They are stored as three bytes in big-endian order, as
+described in the bank select section of the Motif XF Data List:
+
+  0x000000 - 0x00007f  -  GM
+  0x3f0000 - 0x3f007f  -  PRE1
+  0x3f0100 - 0x3f017f  -  PRE2
+  0x3f0200 - 0x3f027f  -  PRE3
+  0x3f0300 - 0x3f037f  -  PRE4
+  0x3f0400 - 0x3f047f  -  PRE5
+  0x3f0500 - 0x3f057f  -  PRE6
+  0x3f0600 - 0x3f067f  -  PRE7
+  0x3f0700 - 0x3f077f  -  PRE8
+  0x3f0800 - 0x3f087f  -  USR1
+  0x3f0900 - 0x3f097f  -  USR2
+  0x3f0a00 - 0x3f0a7f  -  USR3
+  0x3f0b00 - 0x3f0b7f  -  USR4
+  0x3f2000 - 0x3f207f  -  PREDR
+  0x3f2800 - 0x3f287f  -  USRDR
+  0x3f3200 - 0x3f32ff  -  sample voice
+  0x3f3c00 - 0x3f3c0f  -  mixing voice
+  0x7f0000 - 0x7f0000  -  GMDR
+
+(Note the difference in numbering to the numbering of voices in EVCE for
+sample and mixing voices, as these numbers are local to a particular
+song/pattern.)
+
+For both parts p = 0, ..., 3 of a performance, and parts p = 0, ..., 15 of a
+multi, the 3-byte voice number is stored at offset 0x160 + (0x4c)p, where
+offset zero points to the first byte after the "Data" magic and size word.
+
+These locations can be read to include user voice dependencies with
+performances and mixings automatically, but also updated when renumbering user
+voices without gaps in the resulting output file.
