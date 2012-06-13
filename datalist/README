@@ -1,0 +1,25 @@
+Many thanks to 5pinDIN from the motifator.com forum for compiling this
+invaluable list.
+
+Columns in arpeggios.csv are (in order)
+
+  - XF arpeggio number
+  - XF main category
+  - XF sub category
+  - XF arpeggio name
+  - XS arpeggio number (-1 if not available)
+  - XS main category (blank if not available)
+  - XS sub category (blank if not available)
+  - XS arpeggio name (blank if not available)
+
+Columns in waveforms.csv are (in order)
+
+  - XF waveform number
+  - XF main category
+  - XF sub category
+  - XF waveform name
+  - XS waveform number (-1 if not available)
+  - XS category (blank if not available)
+  - XS waveform name (blank if not available)
+
+The Motif XS doesn't subcategorise waveforms.

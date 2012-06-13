@@ -4,6 +4,9 @@ Resources for Yamaha Motif XF
 audio/ contains notes and demonstrations on playing and recording Motif XF
 network audio.
 
+datalist/ contains CSV files of preset arpeggios and wavefords, compiled by
+5pinDIN from the motifator.com forum.
+
 ysfc/ contains notes on the Yamaha YSFC format with some example scripts.
 
 
