@@ -241,3 +241,21 @@ offset zero points to the first byte after the "Data" magic and size word.
 These locations can be read to include user voice dependencies with
 performances and mixings automatically, but also updated when renumbering user
 voices without gaps in the resulting output file.
+
+
+Waveform numbering
+------------------
+
+Program number zero is unused.
+
+Waveforms in the USR bank are stored with program numbers 1 to 128 (filenames
+0001-Waveform.wfm to 0128-Waveform.wfm) and are referred to in voice elements
+as wave numbers 1 to 128 with wave select 1 = USR.
+
+Waveforms in the FL1 bank are stored with program numbers 129 to 2176
+(filenames 0129-Waveform.wfm to 2176-Waveform.wfm) and are referred to in
+voice elements as wave numbers 1 to 2048 with wave select 2 = FL1.
+
+Waveforms in the FL2 bank are stored with program numbers 2177 to 4224
+(filenames 2177-Waveform.wfm to 4224-Waveform.wfm) and are referred to in
+voice elements as wave numbers 1 to 2048 with wave select 3 = FL2.
